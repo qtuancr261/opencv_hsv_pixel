@@ -10,10 +10,8 @@ void calChannel(const vector<int>& colorValue, int totalNumPixels)
 {
 	for (int i{}; i < colorValue.size(); i++)
 	{
-		cout << left << setw(6) << "Value " << setw(5) << i << ": " << setw(6) << colorValue[i] << "/" << setw(8) << totalNumPixels << " | ";
-		if (i % 6 == 0) cout << endl;
+		cout << left << setw(6) << "bin " << setw(5) << i << ": " << setw(6) << colorValue[i] << "/" << setw(8) << totalNumPixels << " | " << endl;
 	}
-	cout << endl;
 }
 
 
@@ -29,19 +27,32 @@ int main(int argc, char *argv[])
 	Mat output_HSV_img;
 	cvtColor(input_RGB_img, output_HSV_img, COLOR_BGR2HSV); // convert RGB to HSV
 	//--------------------------------------------------------------------------------------------
+	
+	int numBin{};
+	cout << "Nhap vao so luong bin: ";
+	cin >> numBin;
+	int binRange{ 256 / numBin };
 	vector<vector<Vec3b>> pixel(output_HSV_img.rows, vector<Vec3b>(output_HSV_img.cols));
-	vector<int> HChannel(180, 0); //  H' <- H/2 (0 <= H <= 360) , For HSV, Hue range is [0,179], Saturation range is [0,255] and Value range is [0,255]
-	vector<int> SChannel(256, 0);
-	vector<int> VChannel(256, 0);
+	vector<int> HChannel(numBin, 0); //  H' <- H/2 (0 <= H <= 360), For HSV, Hue range is [0,179], Saturation range is [0,255] and Value range is [0,255]
+	vector<int> SChannel(numBin, 0);
+	vector<int> VChannel(numBin, 0);
 	int totalNumPixels{ input_RGB_img.rows*input_RGB_img.cols };
-	for (int i{}; i < output_HSV_img.rows; i++)
-		for (int j{}; j < output_HSV_img.cols; j++)
-		{
-			pixel[i][j] = output_HSV_img.at<Vec3b>(i, j);
-			HChannel[(unsigned int)(pixel[i][j][0])]++;
-			SChannel[(unsigned int)(pixel[i][j][1])]++;
-			VChannel[(unsigned int)(pixel[i][j][2])]++;
-		}
+	try
+	{
+		for (int i{}; i < output_HSV_img.rows; i++)
+			for (int j{}; j < output_HSV_img.cols; j++)
+			{
+				pixel[i][j] = output_HSV_img.at<Vec3b>(i, j);
+				HChannel.at((unsigned int)(pixel[i][j][0] / binRange))++;
+				SChannel.at((unsigned int)(pixel[i][j][1] / binRange))++;
+				VChannel.at((unsigned int)(pixel[i][j][2] / binRange))++;
+			}
+	}
+	catch (const out_of_range& error)
+	{
+		cerr << " So luong bin khong hop le ....." << error.what() << endl;
+		return 1;
+	}
 	//--------------------------------------------------------------------------------------------
 	cout << "H Channel:-------------------------------------------------------------------- " << endl;
 	calChannel(HChannel, totalNumPixels);
